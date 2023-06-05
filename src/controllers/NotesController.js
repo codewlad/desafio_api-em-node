@@ -3,7 +3,7 @@ const knex = require("../database/knex");
 class NotesController {
     async create(request, response) {
         const { title, description, rating, tags } = request.body;
-        const { user_id } = request.params;
+        const user_id = request.user.id;
 
         const [note_id] = await knex("movies_notes").insert({
             title,
@@ -12,17 +12,19 @@ class NotesController {
             user_id
         });
 
-        const tagsInsert = tags.map(name => {
-            return {
-                note_id,
-                user_id,
-                name
-            }
-        });
-
-        await knex("movies_tags").insert(tagsInsert);
+        if(tags.length > 0) {
+            const tagsInsert = tags.map(name => {
+                return {
+                    note_id,
+                    user_id,
+                    name
+                }
+            });
+    
+            await knex("movies_tags").insert(tagsInsert);
+        }
         
-        response.json();
+        return response.json();
     }
 
     async show(request, response) {
@@ -46,29 +48,20 @@ class NotesController {
     }
 
     async index(request, response) {
-        const { title, user_id, tags } = request.query;
+        const { title } = request.query;
+
+        const user_id = request.user.id;
 
         let notes;
 
-        if(tags) {
-            const filterTags = tags.split(',').map(tag => tag.trim());
-
-            notes = await knex("movies_tags")
-            .select([
-                "movies_notes.id",
-                "movies_notes.title",
-                "movies_notes.user_id"
-            ])
-            .where("movies_notes.user_id", user_id)
-            .whereLike("movies_notes.title", `%${title}%`)
-            .whereIn("name", filterTags)
-            .innerJoin("movies_notes", "movies_notes.id", "movies_tags.note_id")
-            .orderBy("movies_notes.title")
-
-        } else {
+        if(title){
             notes = await knex("movies_notes")
             .where({ user_id })
             .whereLike("title", `%${title}%`)
+            .orderBy("title");
+        } else {
+            notes = await knex("movies_notes")
+            .where({ user_id })
             .orderBy("title");
         }
 
