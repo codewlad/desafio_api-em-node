@@ -1,4 +1,5 @@
 require("express-async-errors"); // 23 - Importando o express-async-errors
+require("dotenv/config");
 const migrationsRun = require("./database/sqlite/migrations"); // 31 - Importando a conexão com o db
 const AppError = require("./utils/AppError"); // 24 - Importando a classe AppError
 const uploadConfig = require("./configs/upload");
@@ -33,5 +34,5 @@ app.use((error, request, response, next) => { // 25 - Fazendo o tratamento de er
     });
 });
 
-const PORT = 3333; // 3 - Armazenando a porta na variável
+const PORT = process.env.PORT || 3333; // 3 - Armazenando a porta na variável
 app.listen(PORT, () => console.log(`Server is running on Port ${PORT}`)); // 4 - Informando ao app qual porta ele deve ouvir
